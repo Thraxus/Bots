@@ -152,44 +152,48 @@ namespace Bots.GridControl.Models
 			}
 		}
 
-		public void SetThrust(ThrustDirection direction, float value)
+		public void SetThrust(ThrustDirection direction, float value, bool max = false)
 		{
-			if (Math.Sign(value) < 0)
+			if (!max)
 			{
-				value = Math.Abs(value);
-				// If we're requesting negative thrust on this axis, then any 
-				//	thrust on this axis in the requested direction needs to be nullified
-				// Remember, this is a set, not an accumulated value
-				SetRollingThrust(direction, 0);
-				switch (direction)
+				if (Math.Sign(value) < 0)
 				{
-					case ThrustDirection.Up:
-						direction = ThrustDirection.Down;
-						break;
-					case ThrustDirection.Down:
-						direction = ThrustDirection.Up;
-						break;
-					case ThrustDirection.Left:
-						direction = ThrustDirection.Right;
-						break;
-					case ThrustDirection.Right:
-						direction = ThrustDirection.Left;
-						break;
-					case ThrustDirection.Forward:
-						direction = ThrustDirection.Back;
-						break;
-					case ThrustDirection.Back:
-						direction = ThrustDirection.Forward;
-						break;
-					default:
-						return; // something is broken if this ever happens, so... ignore it. 
+					value = Math.Abs(value);
+					// If we're requesting negative thrust on this axis, then any 
+					//	thrust on this axis in the requested direction needs to be nullified
+					// Remember, this is a set, not an accumulated value
+					SetRollingThrust(direction, 0, false);
+					switch (direction)
+					{
+						case ThrustDirection.Up:
+							direction = ThrustDirection.Down;
+							break;
+						case ThrustDirection.Down:
+							direction = ThrustDirection.Up;
+							break;
+						case ThrustDirection.Left:
+							direction = ThrustDirection.Right;
+							break;
+						case ThrustDirection.Right:
+							direction = ThrustDirection.Left;
+							break;
+						case ThrustDirection.Forward:
+							direction = ThrustDirection.Back;
+							break;
+						case ThrustDirection.Back:
+							direction = ThrustDirection.Forward;
+							break;
+						default:
+							return; // something is broken if this ever happens, so... ignore it. 
+					}
 				}
-			}
-			SetBalancedThrust(direction, value);
-			WriteToLog("SetThrust", $"Setting Thrust {direction} {value}", LogType.General);
+
+				SetBalancedThrust(direction, value);
+			} else SetBalancedThrust(direction, value, true);
+			WriteToLog("SetThrust", $"Setting Thrust {direction} {value} {max}", LogType.General);
 		}
 
-		private void SetRollingThrust(ThrustDirection direction, float value)
+		private void SetRollingThrust(ThrustDirection direction, float value, bool max = false)
 		{
 			if (IsClosed) return;
 			float tmpValue = value;
@@ -230,34 +234,47 @@ namespace Bots.GridControl.Models
 
 		private readonly List<ControllableThruster> _passTwoThrusters = new List<ControllableThruster>();
 
-		private void SetBalancedThrust(ThrustDirection direction, float value)
+		private void SetBalancedThrust(ThrustDirection direction, float value, bool max = false)
 		{
 			if (IsClosed) return;
-			_passTwoThrusters.Clear();
-			if (_maxEffectiveThrust[direction] - _currentlyUtilizedThrust[direction] > value) InsufficientThrustAvailable?.Invoke(direction);
-			int thrusterCount = _thrusters[direction].Count;
-			float tmpValue = value, val = value / thrusterCount;
-			foreach (ControllableThruster thruster in _thrusters[direction])
+			if (!max)
 			{
-				if (thruster.MaxThrust() < val)
+				_passTwoThrusters.Clear();
+				if (_maxEffectiveThrust[direction] - _currentlyUtilizedThrust[direction] > value) InsufficientThrustAvailable?.Invoke(direction);
+				int thrusterCount = _thrusters[direction].Count;
+				float tmpValue = value, val = value / thrusterCount;
+				foreach (ControllableThruster thruster in _thrusters[direction])
+				{
+					if (thruster.MaxThrust() < val)
+					{
+						thruster.SetThrust(thruster.MaxThrust());
+						tmpValue -= thruster.MaxThrust();
+						continue;
+					}
+
+					_passTwoThrusters.Add(thruster);
+					thruster.SetThrust(val);
+					tmpValue -= val;
+				}
+
+				_currentlyUtilizedThrust[direction] = value;
+				if (tmpValue <= 0 || _passTwoThrusters.Count == 0) return;
+				val = tmpValue / _passTwoThrusters.Count;
+				WriteToLog("SetBalancedThrust", $"{val} | {tmpValue} | {_passTwoThrusters.Count}", LogType.General);
+				foreach (ControllableThruster thruster in _passTwoThrusters)
+				{
+					thruster.SetThrust(thruster.CurrentThrust() + val);
+				}
+
+				_passTwoThrusters.Clear();
+			}
+			else
+			{
+				foreach (ControllableThruster thruster in _thrusters[direction])
 				{
 					thruster.SetThrust(thruster.MaxThrust());
-					tmpValue -= thruster.MaxThrust();
-					continue;
 				}
-				_passTwoThrusters.Add(thruster);
-				thruster.SetThrust(val);
-				tmpValue -= val;
 			}
-			_currentlyUtilizedThrust[direction] = value;
-			if (tmpValue <= 0 || _passTwoThrusters.Count == 0) return;
-			val = tmpValue / _passTwoThrusters.Count;
-			WriteToLog("SetBalancedThrust", $"{val} | {tmpValue} | {_passTwoThrusters.Count}",LogType.General);
-			foreach (ControllableThruster thruster in _passTwoThrusters)
-			{
-				thruster.SetThrust(thruster.CurrentThrust() + val);
-			}
-			_passTwoThrusters.Clear();
 		}
 
 		public void Update(long tick)

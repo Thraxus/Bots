@@ -40,7 +40,6 @@ namespace Bots.GridControl.Models
 			_thisDestination.Thickness = 0.50f;
 			AddDrawLine();
 			MyAPIGateway.Utilities.MessageEntered += MessageEntered;
-			//List<IMyGps> gpsList = MyAPIGateway.Session.GPS.GetGpsList(MyAPIGateway.Session.LocalHumanPlayer.IdentityId);
 		}
 
 
@@ -48,49 +47,35 @@ namespace Bots.GridControl.Models
 		{
 			if (message.ToLower().StartsWith("0"))
 			{
-				_gridSystems.DebugScreens.WriteToLeft(_waypoints[0].ToString());
-				_gridSystems.DebugScreens.WriteToRight(_thisController.GetNaturalGravity().ToString());
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[0]);
+				ResetSystems();
 			}
 			if (message.ToLower().StartsWith("1"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[1]);
-				_targetPosition = _waypoints[1];
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
-				_thisDestination.To = _waypoints[1];
+				_targetPosition = _waypoints[0];
 			}
 			if (message.ToLower().StartsWith("2"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[2]);
-				_targetPosition = _waypoints[2];
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
-				_thisDestination.To = _waypoints[2];
+				_targetPosition = _waypoints[1];
 			}
 			if (message.ToLower().StartsWith("3"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[3]);
-				_targetPosition = _waypoints[3];
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
-				_thisDestination.To = _waypoints[3];
+				_targetPosition = _waypoints[2];
 			}
 			if (message.ToLower().StartsWith("4"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[4]);
-				_targetPosition = _waypoints[4];
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
-				_thisDestination.To = _waypoints[4];
+				_targetPosition = _waypoints[3];
 			}
 			if (message.ToLower().StartsWith("5"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[5]);
+				_targetPosition = _waypoints[4];
 			}
 			if (message.ToLower().StartsWith("6"))
 			{
-				_gridSystems.ControllableGyros.SetTargetHeading(_waypoints[6]);
+				_targetPosition = _waypoints[5];
 			}
 			if (message.ToLower().StartsWith("p"))
 			{
-				_gridSystems.ControllableGyros.UsePlayerPosition();
+				_usePlayerPosition = true;
 			}
 			if (message.ToLower().StartsWith("t"))
 			{
@@ -98,13 +83,22 @@ namespace Bots.GridControl.Models
 			}
 
 			if (!message.ToLower().StartsWith("x")) return;
+			ResetSystems();
+			
+		}
+
+		private void ResetSystems()
+		{
 			_gridSystems.ControllableGyros.Reset();
 			_gridSystems.ControllableThrusters.ResetThrust();
 			_targetPosition = Vector3D.Zero;
+			_usePlayerPosition = false;
 		}
 
 		private ThrustDirection _currentThrustDirection = ThrustDirection.Forward;
 		private Vector3D _targetPosition = Vector3D.Zero;
+		private bool _usePlayerPosition;
+
 		private float GetBrakingSpeed()
 		{
 			_gridSystems.DebugScreens.WriteToLeft($"{_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(_currentThrustDirection)}\n{_thisController.CalculateShipMass().TotalMass}\n{_thisController.CalculateShipMass().PhysicalMass}");
@@ -165,31 +159,56 @@ namespace Bots.GridControl.Models
 
 		private readonly PointBillboard _stoppingPoint = new PointBillboard();
 
-		private double _engagementRange = 500f;
+		private double _engagementRange = 200;
+
+		private bool _forwardThrusting;
+		private bool _circling;
 
 		public void Update(long tick)
 		{
+			_rightScreen.Clear();
+			double distance = 0;
+			double displacement = 0;
 			_thisDestination.From = _thisController.GetPosition() + (_thisController.WorldMatrix.Up * 1);
 			_thisDestination.Set();
 			_draw.DrawLine(_thisDestination);
 			_draw.Update(tick);
 			_gridSystems.ControllableGyros.Update(tick);
 
-			double distance = Vector3D.Distance(_targetPosition, _thisController.GetPosition());
-			if (distance < Displacement(_engagementRange))
+			if (_targetPosition != Vector3D.Zero || _usePlayerPosition)
 			{
-				_gridSystems.ControllableThrusters.ResetThrust();
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Left, 50000);
+				displacement = Displacement();
+				_gridSystems.ControllableGyros.SetTargetHeading(_usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition);
+				_thisDestination.To = _usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition;
+
+				distance = Vector3D.Distance(_targetPosition, _thisController.GetPosition() + GetCurrentThrustVector() * _engagementRange);
+				if (distance < displacement)
+				{
+					//_gridSystems.ControllableThrusters.ResetThrust();
+					_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 0);
+					_forwardThrusting = false;
+					if (!_circling)
+					{
+						_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Left, 50000, true);
+						_circling = true;
+					}
+				}
+				else
+				{
+					_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000, true);
+					_forwardThrusting = true;
+				}
 			}
+
+			
 
 
 			
 
 			double time = _thisController.GetShipVelocities().LinearVelocity.Length() / Math.Abs(GetBrakingSpeed());
-
-			_rightScreen.Clear();
+			
 			_rightScreen.AppendLine($"Distance: {distance}");
-			_rightScreen.AppendLine($"Displacement: {Displacement()}");
+			_rightScreen.AppendLine($"Displacement: {displacement}");
 			_rightScreen.AppendLine($"Linear Velocity: {_thisController.GetShipVelocities().LinearVelocity.Length()}");
 			_rightScreen.AppendLine($"Braking Speed: {GetBrakingSpeed()}");
 			_rightScreen.AppendLine($"Time: {time}");

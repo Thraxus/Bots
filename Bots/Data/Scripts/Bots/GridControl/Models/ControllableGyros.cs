@@ -49,35 +49,18 @@ namespace Bots.GridControl.Models
 		public void Update(long tick)
 		{
 			//if (_updateSchedule % tick != 0) return;
-			if (_targetHeading == Vector3D.Zero && !_usePlayerLocation) return;
-			if (_usePlayerLocation)
-			{
-				RotationAngles.GetRotationAnglesWithRoll(_playerPosition - _thisController.GetPosition(), _thisController.GetPosition() - _thisController.GetNaturalGravity(), _thisController.WorldMatrix, _gyroOverrides);
-			}
+			if (_targetHeading == Vector3D.Zero) return;
+			RotationAngles.GetRotationAnglesWithRoll(_targetHeading - _thisController.GetPosition(), _thisController.GetPosition() - _thisController.GetNaturalGravity(), _thisController.WorldMatrix, _gyroOverrides);
 
-			else
-			{
-				RotationAngles.GetRotationAnglesWithRoll(_targetHeading - _thisController.GetPosition(), _thisController.GetPosition() - _thisController.GetNaturalGravity(), _thisController.WorldMatrix, _gyroOverrides);
-			}
 			
 			ApplyGyroOverride();
 		}
-
-		private bool _usePlayerLocation;
-
-		private Vector3D _playerPosition => MyAPIGateway.Session.Player.GetPosition();
-
-		public void UsePlayerPosition()
-		{
-			_usePlayerLocation = true;
-		}
-
+		
 		private Vector3D _targetHeading = Vector3D.Zero;
 
 		public void Reset()
 		{
 			_targetHeading = Vector3D.Zero;
-			_usePlayerLocation = false;
 
 			foreach (IMyGyro gyro in _gyros)
 			{
