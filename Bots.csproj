@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E89521B3-DD7B-4B9C-AE76-A03A2C8DACF9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Bots</RootNamespace>
+    <AssemblyName>Bots</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>6</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>Bots.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>Bots.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>Bots.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>Bots.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\netstandard.dll</HintPath>
+    </Reference>
+    <Reference Include="ProtoBuf.Net.Core">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\ProtoBuf.Net.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Common">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Game">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Game.XmlSerializers">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.XmlSerializers.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Graphics">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Graphics.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.RenderDirect">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.RenderDirect.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.Game">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.ObjectBuilders">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.ObjectBuilders.XmlSerializers">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.XmlSerializers.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="VRage">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Ansel">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Ansel.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Audio">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Audio.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Game">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Game.XmlSerializers">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Game.XmlSerializers.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Input">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Input.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Library">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Library.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Math">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Math.XmlSerializers">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Math.XmlSerializers.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Mod.Io">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Mod.Io.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.NativeAftermath">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.NativeAftermath.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.NativeWrapper">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.NativeWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Network">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Network.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Platform.Windows">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Platform.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Render">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Render.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Render11">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Render11.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Scripting">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Steam">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.Steam.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.UserInterface">
+      <HintPath>..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\VRage.UserInterface.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Bots\Data\Scripts\BotCore.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\BaseClasses\BaseClosableClass.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\BaseClasses\BaseGameLogicComp.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\BaseClasses\BaseLoggingClass.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\BaseClasses\BaseSessionComp.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Enums\CompType.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Enums\FactionRelationship.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Enums\LogType.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Interfaces\IClose.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Interfaces\ILog.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Models\BufferedBinaryReader.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Models\FastQueue.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Settings.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\FileHandlers\Load.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\FileHandlers\Save.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Statics\Statics.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Statics\ThrusterCalculations.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Statics\VectorManipulations.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Logging\Log.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Logging\StaticLog.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Networking\ChatHandler.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Networking\MessageBase.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Networking\Messages\ExampleMessage.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Networking\Messaging.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\OnScreenDisplay\QuestlogDetail.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\OnScreenDisplay\QuestScreen.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\Common\Utilities\Tools\Profiler.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\RotationAngles.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\Pid.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\VectorMath.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\GyroOverrides.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Line.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\PidType.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\ThrustDirection.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\PointBillboard.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\GridControlCore.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Interfaces\ILog.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Interfaces\IUpdate.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ControllableGrid.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ControllableGyros.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ControllableLandingGear.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ControllableThruster.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ControllableThrusters.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\DebugDraw.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\DebugScreens.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\FlightControl.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\GridSystems.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\PidController.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
