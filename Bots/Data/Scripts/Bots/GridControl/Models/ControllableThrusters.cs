@@ -152,6 +152,11 @@ namespace Bots.GridControl.Models
 			}
 		}
 
+		public void SetThrust(ThrustDirection direction, ThrustPower power)
+		{
+			SetBalancedThrust(direction, power);
+		}
+
 		public void SetThrust(ThrustDirection direction, float value, bool max = false)
 		{
 			if (!max)
@@ -233,6 +238,36 @@ namespace Bots.GridControl.Models
 		}
 
 		private readonly List<ControllableThruster> _passTwoThrusters = new List<ControllableThruster>();
+
+		private void SetBalancedThrust(ThrustDirection direction, ThrustPower power)
+		{
+			if (IsClosed) return;
+			foreach (ControllableThruster thruster in _thrusters[direction])
+			{
+				float thrusterPower = thruster.MaxThrust();
+				switch (power)
+				{
+					case ThrustPower.None:
+						thrusterPower = 0;
+						break;
+					case ThrustPower.Full:
+						break;
+					case ThrustPower.Half:
+						thrusterPower *= 0.5f;
+						break;
+					case ThrustPower.Quarter:
+						thrusterPower *= 0.25f;
+						break;
+					case ThrustPower.ThreeQuarters:
+						thrusterPower *= 0.75f;
+						break;
+					default:
+						thrusterPower = 0;
+						break;
+				}
+				thruster.SetThrust(thrusterPower);
+			}
+		}
 
 		private void SetBalancedThrust(ThrustDirection direction, float value, bool max = false)
 		{

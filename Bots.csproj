@@ -184,6 +184,9 @@
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\RotationAngles.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\Pid.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\VectorMath.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\BotState.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\EngagementPattern.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\ThrustPower.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\GyroOverrides.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Line.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\PidType.cs" />
