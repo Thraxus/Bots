@@ -6,6 +6,7 @@
 		Full,
 		Half,
 		Quarter,
+		TenPercent,
 		ThreeQuarters
 	}
 }

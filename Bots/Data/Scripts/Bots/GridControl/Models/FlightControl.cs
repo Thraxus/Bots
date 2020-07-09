@@ -81,7 +81,11 @@ namespace Bots.GridControl.Models
 			{
 				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
 			}
-
+			if (message.ToLower().StartsWith("r"))
+			{
+				_botState = BotState.Patrolling;
+				_engagementRange = 0;
+			}
 			if (!message.ToLower().StartsWith("x")) return;
 			ResetSystems();
 			
@@ -95,6 +99,7 @@ namespace Bots.GridControl.Models
 			_usePlayerPosition = false;
 			_botState = BotState.Waiting;
 			_engagementPattern = EngagementPattern.None;
+			_engagementRange = 400;
 		}
 
 		private ThrustDirection _currentThrustDirection = ThrustDirection.Forward;
@@ -162,11 +167,13 @@ namespace Bots.GridControl.Models
 		private readonly PointBillboard _stoppingPoint = new PointBillboard();
 		private BotState _botState = BotState.Waiting;
 		private EngagementPattern _engagementPattern = EngagementPattern.None;
-		private double _engagementRange = 200;
+		private double _engagementRange = 400;
 		private double _engagementBuffer => _engagementRange * 0.1;
 
 		private bool _forwardThrusting;
 		private bool _circling;
+
+		private PatrolRoute _patrolRoute = new PatrolRoute();
 
 		private void TargetAcquired(Vector3D target)
 		{
@@ -185,9 +192,9 @@ namespace Bots.GridControl.Models
 			_draw.Update(tick);
 			_gridSystems.ControllableGyros.Update(tick);
 
-			if (_targetPosition != Vector3D.Zero || _usePlayerPosition)
+			if (_botState != BotState.Waiting || _usePlayerPosition)
 			{
-				if(_botState == BotState.Waiting) _botState = BotState.Intercepting;
+				if (_botState == BotState.Patrolling && _targetPosition == Vector3D.Zero) _targetPosition = _patrolRoute.GetNextNode();
 				displacement = Displacement();
 				_gridSystems.ControllableGyros.SetTargetHeading(_usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition);
 				_thisDestination.To = _usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition;
@@ -219,7 +226,7 @@ namespace Bots.GridControl.Models
 						if (_engagementPattern == EngagementPattern.None)
 						{
 							_engagementPattern = EngagementPattern.Circling;
-							_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Left, ThrustPower.Quarter);
+							_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Left, ThrustPower.TenPercent);
 						}
 						break;
 					case BotState.Evading:
@@ -238,6 +245,18 @@ namespace Bots.GridControl.Models
 						}
 						break;
 					case BotState.Patrolling:
+						if (distance > displacement)
+						{
+							_gridSystems.ControllableThrusters.SetThrust(_currentThrustDirection, ThrustPower.Full);
+						}
+						else if (distance < displacement)
+						{
+							_gridSystems.ControllableThrusters.SetThrust(_currentThrustDirection, ThrustPower.None);
+						}
+						if (distance < 20)
+						{
+							_targetPosition = _patrolRoute.GetNextNode();
+						}
 						break;
 					case BotState.Stalking:
 						break;

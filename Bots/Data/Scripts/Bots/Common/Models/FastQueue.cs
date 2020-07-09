@@ -37,5 +37,17 @@
 		{
 			return _nodes;
 		}
+
+
+
+		public int Count => _nodes.Length;
+
+		public void Clear()
+		{
+			for (int index = _nodes.Length - 1; index >= 0; index--)
+			{
+				_nodes[index] = default(T);
+			}
+		}
 	}
 }

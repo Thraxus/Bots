@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Bots.Common.Models;
 using Bots.GridControl.DataTypes.Enums;
 
 namespace Bots.GridControl.Models
@@ -19,8 +20,7 @@ namespace Bots.GridControl.Models
 		private long _stepLength = 5; // Ticks between recalculations
 		private long _totalSteps; // How many times has this run
 
-		private readonly Queue<double> _pastErrorQueue = new Queue<double>(3);
-
+		private readonly FastQueue<double> _pastErrorQueue = new FastQueue<double>(3);
 		private double _previousIntegral = 0;
 
 		private double _bias = 0;
@@ -43,8 +43,14 @@ namespace Bots.GridControl.Models
 
 		private double _max;
 		private double _min;
+		private double _lastError = 0;
 
 		private readonly PidType _type;
+
+		public PidController()
+		{
+			
+		}
 
 		public PidController(PidType type)
 		{
@@ -84,9 +90,10 @@ namespace Bots.GridControl.Models
 			
 			// I
 			double integral = _previousIntegral + (error * _stepLength);
-			
+
 			// D
-			double derivative = (error - pastErrors) / _stepLength;
+			//double derivative = (error - pastErrors) / _stepLength;
+			double derivative = (error - _lastError) / _stepLength;
 
 			// P
 			double output = Kp * error + (Ki * integral) + (Kd * derivative) + _bias;
@@ -94,10 +101,12 @@ namespace Bots.GridControl.Models
 			_pastErrorQueue.Enqueue(error);
 			_previousIntegral = integral;
 			_totalSteps++;
+			_lastError = error;
 
-			if (useDeadBand && enforceLimit) return IsBetween(output, _deadMax, _deadMin) ? 0 : Clamp(output, _limitMax, _limitMin);
-			if (useDeadBand) return IsBetween(output, _deadMax, _deadMin) ? 0 : output;
-			return enforceLimit ? Clamp(output, _limitMax, _limitMin) : output;
+			//if (useDeadBand && enforceLimit) return IsBetween(output, _deadMax, _deadMin) ? 0 : Clamp(output, _limitMax, _limitMin);
+			//if (useDeadBand) return IsBetween(output, _deadMax, _deadMin) ? 0 : output;
+			//return enforceLimit ? Clamp(output, _limitMax, _limitMin) : output;
+			return output;
 		}
 		
 		private double AverageSumPastErrors()

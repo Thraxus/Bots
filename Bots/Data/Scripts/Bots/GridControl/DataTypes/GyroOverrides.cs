@@ -1,13 +1,18 @@
-﻿using Bots.GridControl.Controllers.WhipsCode;
+﻿using Bots.Common;
+using Bots.GridControl.Controllers.WhipsCode;
 
 namespace Bots.GridControl.DataTypes
 {
 	public class GyroOverrides
 	{
+		private const double Kp = 2;
+		private const double Ki = 0;
+		private const double Kd = 0.1;
+
 		// when i get to PIDs, they will be setup here
-		private Pid _pitchPID;
-		private Pid _yawPID;
-		private Pid _rollPID;
+		private readonly Pid _pitchPid = new Pid(Kp, Ki, Kd, 0.1, 1.0 / Settings.TicksPerSecond);
+		private readonly Pid _yawPid = new Pid(Kp, Ki, Kd, 0.1, 1.0 / Settings.TicksPerSecond);
+		private readonly Pid _rollPid = new Pid(Kp, Ki, Kd, 0.1, 1.0 / Settings.TicksPerSecond);
 
 		private double _yaw = 0;
 		private double _pitch = 0;
@@ -30,17 +35,17 @@ namespace Bots.GridControl.DataTypes
 
 		public double GetYaw()
 		{
-			return _yaw;
+			return _yawPid.Control(_yaw);
 		}
 
 		public double GetPitch()
 		{
-			return _pitch;
+			return _pitchPid.Control(_pitch);
 		}
 
 		public double GetRoll()
 		{
-			return _roll;
+			return _rollPid.Control(_roll);
 		}
 	}
 }

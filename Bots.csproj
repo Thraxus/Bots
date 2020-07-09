@@ -204,6 +204,7 @@
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\DebugScreens.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\FlightControl.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\GridSystems.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\PatrolRoute.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\PidController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

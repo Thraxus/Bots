@@ -1,6 +1,6 @@
 ﻿namespace Bots.GridControl.Controllers.WhipsCode
 {
-	class Pid
+	public class Pid
     {
         double _kP = 0;
         double _kI = 0;
@@ -71,8 +71,8 @@
             _lastError = error;
 
             //Construct output
-            this.Value = _kP * error + _kI * _errorSum + _kD * errorDerivative;
-            return this.Value;
+            Value = _kP * error + _kI * _errorSum + _kD * errorDerivative;
+            return Value;
         }
 
         public double Control(double error, double timeStep)

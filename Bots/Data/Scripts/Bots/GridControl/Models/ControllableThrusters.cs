@@ -258,6 +258,9 @@ namespace Bots.GridControl.Models
 					case ThrustPower.Quarter:
 						thrusterPower *= 0.25f;
 						break;
+					case ThrustPower.TenPercent:
+						thrusterPower *= 0.1f;
+						break;
 					case ThrustPower.ThreeQuarters:
 						thrusterPower *= 0.75f;
 						break;
