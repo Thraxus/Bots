@@ -9,6 +9,7 @@ using Bots.GridControl.Interfaces;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Collections;
+using VRageMath;
 
 namespace Bots.GridControl.Models
 {
@@ -41,6 +42,7 @@ namespace Bots.GridControl.Models
 
 		private readonly IMyShipController _thisIController;
 		private readonly MyShipController _thisController;
+		private readonly MyCubeGrid _thisCubeGrid;
 
 		public event Action<ThrustDirection> InsufficientThrustAvailable;
 		
@@ -48,6 +50,7 @@ namespace Bots.GridControl.Models
 		{
 			_thisIController = controller;
 			_thisController = (MyShipController) controller;
+			_thisCubeGrid = _thisController.CubeGrid;
 			_thisController.ControlThrusters = true;
 			controller.GetNaturalGravity();
 			_thrusters.Add(ThrustDirection.Forward, new ConcurrentCachingList<ControllableThruster>());
@@ -105,7 +108,54 @@ namespace Bots.GridControl.Models
 			}
 			RecalculateUtilizedThrust();
 		}
-		
+
+		private bool _customDampnersEnabled;
+
+		public void EnableCustomDampners()
+		{
+			if (_thisIController.EnabledDamping) _thisIController.SwitchDamping();
+			_customDampnersEnabled = true;
+			
+		}
+
+		public void DisableCustomDampners()
+		{
+			if (!_thisIController.EnabledDamping) _thisIController.SwitchDamping();
+			_customDampnersEnabled = false;
+		}
+
+		private void CustomDampners()
+		{
+			if (!_customDampnersEnabled) return;
+			double mass = _thisCubeGrid.Mass;// _thisController.CalculateShipMass().PhysicalMass;
+			Vector3D gravity = _thisController.GetNaturalGravity();
+			Vector3D gravityNormalized = Vector3D.Normalize(gravity);
+			double requiredThrust = mass * gravity.Length();
+			double forwardThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Forward);
+			double upThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Up);
+			double rightThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Right);
+			double arrestForwardMovement = mass * forwardThrust;
+			double arrestUpMovement = mass * upThrust;
+			double arrestRightMovement = mass * rightThrust;
+			double forwardRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Forward), gravityNormalized);
+			double upRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Up), gravityNormalized);
+			double rightRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Right), gravityNormalized);
+
+			//SetDampnerThrust(ThrustDirection.Forward, (requiredThrust * forwardRatio) - arrestForwardMovement);
+			//SetDampnerThrust(ThrustDirection.Up, (requiredThrust * upRatio) - arrestUpMovement);
+			//SetDampnerThrust(ThrustDirection.Right, (requiredThrust * rightRatio) - arrestRightMovement);
+
+			Vector3D thrust = new Vector3D(
+				(requiredThrust * rightRatio) - arrestRightMovement,
+				(requiredThrust * upRatio) - arrestUpMovement, 
+				(requiredThrust * forwardRatio) - arrestForwardMovement);
+
+			SetDampnerThrust(thrust);
+			// -Z will be thrust in forward
+			//  Y will be thrust up
+			//  X will be thrust right
+		}
+
 		private void RecalculateUtilizedThrust()
 		{
 			ResetUtilizedThrust();
@@ -148,7 +198,7 @@ namespace Bots.GridControl.Models
 		{
 			foreach (KeyValuePair<ThrustDirection, ConcurrentCachingList<ControllableThruster>> thrusters in _thrusters)
 			{
-				SetBalancedThrust(thrusters.Key, 0);
+				SetBalancedThrust(thrusters.Key, ThrustPower.None);
 			}
 		}
 
@@ -157,51 +207,105 @@ namespace Bots.GridControl.Models
 			SetBalancedThrust(direction, power);
 		}
 
-		public void SetThrust(ThrustDirection direction, float value, bool max = false)
+		private void SetDampnerThrust(Vector3D vector)
 		{
-			if (!max)
-			{
-				if (Math.Sign(value) < 0)
-				{
-					value = Math.Abs(value);
-					// If we're requesting negative thrust on this axis, then any 
-					//	thrust on this axis in the requested direction needs to be nullified
-					// Remember, this is a set, not an accumulated value
-					SetRollingThrust(direction, 0, false);
-					switch (direction)
-					{
-						case ThrustDirection.Up:
-							direction = ThrustDirection.Down;
-							break;
-						case ThrustDirection.Down:
-							direction = ThrustDirection.Up;
-							break;
-						case ThrustDirection.Left:
-							direction = ThrustDirection.Right;
-							break;
-						case ThrustDirection.Right:
-							direction = ThrustDirection.Left;
-							break;
-						case ThrustDirection.Forward:
-							direction = ThrustDirection.Back;
-							break;
-						case ThrustDirection.Back:
-							direction = ThrustDirection.Forward;
-							break;
-						default:
-							return; // something is broken if this ever happens, so... ignore it. 
-					}
-				}
+			WriteToLog("SetDampnerThrust", $"Setting Thrust {vector}", LogType.General);
+			// -Z will be thrust in forward
+			//  Y will be thrust up
+			//  X will be thrust right
 
-				SetBalancedThrust(direction, value);
-			} else SetBalancedThrust(direction, value, true);
-			WriteToLog("SetThrust", $"Setting Thrust {direction} {value} {max}", LogType.General);
+			if (vector.X > 0)
+			{
+				DampnerThrust(ThrustDirection.Right, vector.X);
+				DampnerThrust(ThrustDirection.Left, 0);
+			}
+			else if (vector.X < 0)
+			{
+				DampnerThrust(ThrustDirection.Left, -vector.X);
+				DampnerThrust(ThrustDirection.Right, 0);
+			}
+			else
+			{
+				DampnerThrust(ThrustDirection.Left, 0);
+				DampnerThrust(ThrustDirection.Right, 0);
+			}
+
+			if (vector.Y > 0)
+			{
+				DampnerThrust(ThrustDirection.Up, vector.Y);
+				DampnerThrust(ThrustDirection.Down, 0);
+			}
+			else if (vector.Y < 0)
+			{
+				DampnerThrust(ThrustDirection.Down, -vector.Y);
+				DampnerThrust(ThrustDirection.Up, 0);
+			}
+			else
+			{
+				DampnerThrust(ThrustDirection.Up, 0);
+				DampnerThrust(ThrustDirection.Down, 0);
+			}
+
+			if (vector.Z > 0)
+			{
+				DampnerThrust(ThrustDirection.Forward, vector.Z);
+				DampnerThrust(ThrustDirection.Back, 0);
+			}
+			else if (vector.Z < 0)
+			{
+				DampnerThrust(ThrustDirection.Back, -vector.Z);
+				DampnerThrust(ThrustDirection.Forward, 0);
+			}
+			else
+			{
+				DampnerThrust(ThrustDirection.Forward, 0);
+				DampnerThrust(ThrustDirection.Back, 0);
+			}
 		}
 
-		private void SetRollingThrust(ThrustDirection direction, float value, bool max = false)
+		private void SetDampnerThrust(ThrustDirection direction, double value)
 		{
+			if (double.IsNaN(value)) return;
+			if (Math.Sign(value) == -1)
+			{
+				value = Math.Abs(value);
+				// If we're requesting negative thrust on this axis, then any 
+				//	thrust on this axis in the requested direction needs to be nullified
+				// Remember, this is a set, not an accumulated value
+				DampnerThrust(direction, 0);
+				switch (direction)
+				{
+					case ThrustDirection.Up:
+						direction = ThrustDirection.Down;
+						break;
+					case ThrustDirection.Down:
+						direction = ThrustDirection.Up;
+						break;
+					case ThrustDirection.Left:
+						direction = ThrustDirection.Right;
+						break;
+					case ThrustDirection.Right:
+						direction = ThrustDirection.Left;
+						break;
+					case ThrustDirection.Forward:
+						direction = ThrustDirection.Back;
+						break;
+					case ThrustDirection.Back:
+						direction = ThrustDirection.Forward;
+						break;
+					default:
+						return; // something is broken if this ever happens, so... ignore it. 
+				}
+			}
+			DampnerThrust(direction, value);
+			WriteToLog("SetDampnerThrust", $"Setting Thrust {direction} {value}", LogType.General);
+		}
+
+		private void SetRollingThrust(ThrustDirection direction, double value)
+		{
+			if (double.IsNaN(value)) return;
 			if (IsClosed) return;
-			float tmpValue = value;
+			double tmpValue = value;
 			_currentlyUtilizedThrust[direction] = 0;
 			foreach (ControllableThruster thruster in _thrusters[direction])
 			{
@@ -217,7 +321,7 @@ namespace Bots.GridControl.Models
 
 				if (availableThrust > tmpValue)
 				{
-					thruster.SetThrust(thruster.CurrentThrust() + tmpValue);
+					thruster.SetThrust((float) (thruster.CurrentThrust() + tmpValue));
 					tmpValue = 0;
 				}
 				else
@@ -231,10 +335,10 @@ namespace Bots.GridControl.Models
 			if (tmpValue > 0) 
 			{
 				InsufficientThrustAvailable?.Invoke(direction);
-				_currentlyUtilizedThrust[direction] = value - tmpValue;
+				_currentlyUtilizedThrust[direction] = (float) (value - tmpValue);
 				return;
 			}
-			_currentlyUtilizedThrust[direction] = value;
+			_currentlyUtilizedThrust[direction] = (float) value;
 		}
 
 		private readonly List<ControllableThruster> _passTwoThrusters = new List<ControllableThruster>();
@@ -272,52 +376,40 @@ namespace Bots.GridControl.Models
 			}
 		}
 
-		private void SetBalancedThrust(ThrustDirection direction, float value, bool max = false)
+		private void DampnerThrust(ThrustDirection direction, double value)
 		{
 			if (IsClosed) return;
-			if (!max)
+			WriteToLog("DampnerThrust",$"{direction} {value:F6}",LogType.General);
+			_passTwoThrusters.Clear();
+			//if (_maxEffectiveThrust[direction] - _currentlyUtilizedThrust[direction] > value) InsufficientThrustAvailable?.Invoke(direction);
+			int thrusterCount = _thrusters[direction].Count;
+			double tmpValue = value, val = value / thrusterCount;
+			foreach (ControllableThruster thruster in _thrusters[direction])
 			{
-				_passTwoThrusters.Clear();
-				if (_maxEffectiveThrust[direction] - _currentlyUtilizedThrust[direction] > value) InsufficientThrustAvailable?.Invoke(direction);
-				int thrusterCount = _thrusters[direction].Count;
-				float tmpValue = value, val = value / thrusterCount;
-				foreach (ControllableThruster thruster in _thrusters[direction])
-				{
-					if (thruster.MaxThrust() < val)
-					{
-						thruster.SetThrust(thruster.MaxThrust());
-						tmpValue -= thruster.MaxThrust();
-						continue;
-					}
-
-					_passTwoThrusters.Add(thruster);
-					thruster.SetThrust(val);
-					tmpValue -= val;
-				}
-
-				_currentlyUtilizedThrust[direction] = value;
-				if (tmpValue <= 0 || _passTwoThrusters.Count == 0) return;
-				val = tmpValue / _passTwoThrusters.Count;
-				WriteToLog("SetBalancedThrust", $"{val} | {tmpValue} | {_passTwoThrusters.Count}", LogType.General);
-				foreach (ControllableThruster thruster in _passTwoThrusters)
-				{
-					thruster.SetThrust(thruster.CurrentThrust() + val);
-				}
-
-				_passTwoThrusters.Clear();
-			}
-			else
-			{
-				foreach (ControllableThruster thruster in _thrusters[direction])
+				if (thruster.MaxThrust() < val)
 				{
 					thruster.SetThrust(thruster.MaxThrust());
+					tmpValue -= thruster.MaxThrust();
 				}
+				_passTwoThrusters.Add(thruster);
+				thruster.SetThrust((float) val);
+				tmpValue -= val;
 			}
+			//_currentlyUtilizedThrust[direction] = (float) value;
+			if (tmpValue <= 0 || _passTwoThrusters.Count == 0) return;
+			val = tmpValue / _passTwoThrusters.Count;
+			WriteToLog("DampnerThrust-PassTwo", $"{direction} {val:F6} | {tmpValue:F6} | {_passTwoThrusters.Count}", LogType.General);
+			foreach (ControllableThruster thruster in _passTwoThrusters)
+			{
+				thruster.SetThrust((float) (thruster.CurrentThrust() + val));
+			}
+			_passTwoThrusters.Clear();
 		}
 
 		public void Update(long tick)
 		{
-			
+			if (tick % 10 != 0) return;
+			CustomDampners();
 		}
 
 		public override string ToString()

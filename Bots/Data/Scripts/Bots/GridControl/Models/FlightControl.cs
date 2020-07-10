@@ -23,16 +23,18 @@ namespace Bots.GridControl.Models
 
 		private readonly GridSystems _gridSystems;
 
-		private readonly MyCubeGrid _thisGrid;
-		private readonly IMyShipController _thisController;
+		private readonly MyCubeGrid _thisCubeGrid;
+		private readonly IMyShipController _thisIController;
+		private readonly MyShipController _thisController;
 		private readonly DebugDraw _draw = new DebugDraw();
 
 		private readonly Line _thisDestination = new Line();
 
 		public FlightControl(MyCubeGrid thisGrid, IMyShipController thisController, GridSystems gridSystems)
 		{
-			_thisGrid = thisGrid;
-			_thisController = thisController;
+			_thisCubeGrid = thisGrid;
+			_thisIController = thisController;
+			_thisController = (MyShipController) thisController;
 			_gridSystems = gridSystems;
 
 			_thisDestination.Color = new Vector4(255, 0, 0, 1);
@@ -40,6 +42,7 @@ namespace Bots.GridControl.Models
 			_thisDestination.Thickness = 0.50f;
 			AddDrawLine();
 			MyAPIGateway.Utilities.MessageEntered += MessageEntered;
+			_gridSystems.ControllableThrusters.OnWriteToLog += WriteToLog;
 		}
 
 
@@ -73,13 +76,17 @@ namespace Bots.GridControl.Models
 			{
 				TargetAcquired(_waypoints[5]);
 			}
+			if (message.ToLower().StartsWith("d"))
+			{
+				_gridSystems.ControllableThrusters.EnableCustomDampners();
+			}
 			if (message.ToLower().StartsWith("p"))
 			{
 				_usePlayerPosition = true;
 			}
 			if (message.ToLower().StartsWith("t"))
 			{
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 500000);
+				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, ThrustPower.Full);
 			}
 			if (message.ToLower().StartsWith("r"))
 			{
@@ -95,6 +102,7 @@ namespace Bots.GridControl.Models
 		{
 			_gridSystems.ControllableGyros.Reset();
 			_gridSystems.ControllableThrusters.ResetThrust();
+			_gridSystems.ControllableThrusters.DisableCustomDampners();
 			_targetPosition = Vector3D.Zero;
 			_usePlayerPosition = false;
 			_botState = BotState.Waiting;
@@ -108,8 +116,8 @@ namespace Bots.GridControl.Models
 
 		private float GetBrakingSpeed()
 		{
-			_gridSystems.DebugScreens.WriteToLeft($"{_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(_currentThrustDirection)}\n{_thisController.CalculateShipMass().TotalMass}\n{_thisController.CalculateShipMass().PhysicalMass}");
-			return -(_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(GetBrakingDirection()) / _thisController.CalculateShipMass().PhysicalMass);
+			_gridSystems.DebugScreens.WriteToLeft($"{_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(_currentThrustDirection)}\n{_thisIController.CalculateShipMass().TotalMass}\n{_thisIController.CalculateShipMass().PhysicalMass}");
+			return -(_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(GetBrakingDirection()) / _thisIController.CalculateShipMass().PhysicalMass);
 		}
 
 		private Vector3D GetCurrentThrustVector()
@@ -117,17 +125,17 @@ namespace Bots.GridControl.Models
 			switch (_currentThrustDirection)
 			{
 				case ThrustDirection.Forward:
-					return _thisController.WorldMatrix.Forward;
+					return _thisIController.WorldMatrix.Forward;
 				case ThrustDirection.Back:
-					return _thisController.WorldMatrix.Backward;
+					return _thisIController.WorldMatrix.Backward;
 				case ThrustDirection.Right:
-					return _thisController.WorldMatrix.Right;
+					return _thisIController.WorldMatrix.Right;
 				case ThrustDirection.Left:
-					return _thisController.WorldMatrix.Left;
+					return _thisIController.WorldMatrix.Left;
 				case ThrustDirection.Up:
-					return _thisController.WorldMatrix.Up;
+					return _thisIController.WorldMatrix.Up;
 				case ThrustDirection.Down:
-					return _thisController.WorldMatrix.Down;
+					return _thisIController.WorldMatrix.Down;
 				default:
 					return Vector3D.Zero;
 			}
@@ -156,14 +164,9 @@ namespace Bots.GridControl.Models
 
 		private Vector3D GetStoppingPoint()
 		{
-			return _thisController.GetPosition() + (_thisController.GetShipVelocities().LinearVelocity.Normalize() * (_thisController.GetShipVelocities().LinearVelocity.Length() / GetBrakingSpeed()));
+			return _thisIController.GetPosition() + (_thisIController.GetShipVelocities().LinearVelocity.Normalize() * (_thisIController.GetShipVelocities().LinearVelocity.Length() / GetBrakingSpeed()));
 		}
-
-		private void ThrustControl()
-		{
-			_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, 50000f);
-		}
-
+		
 		private readonly PointBillboard _stoppingPoint = new PointBillboard();
 		private BotState _botState = BotState.Waiting;
 		private EngagementPattern _engagementPattern = EngagementPattern.None;
@@ -173,7 +176,7 @@ namespace Bots.GridControl.Models
 		private bool _forwardThrusting;
 		private bool _circling;
 
-		private PatrolRoute _patrolRoute = new PatrolRoute();
+		private readonly PatrolRoute _patrolRoute = new PatrolRoute();
 
 		private void TargetAcquired(Vector3D target)
 		{
@@ -183,10 +186,11 @@ namespace Bots.GridControl.Models
 
 		public void Update(long tick)
 		{
+			_gridSystems.ControllableThrusters.Update(tick);
 			_rightScreen.Clear();
 			double distance = 0;
 			double displacement = 0;
-			_thisDestination.From = _thisController.GetPosition() + (_thisController.WorldMatrix.Up * 1);
+			_thisDestination.From = _thisIController.GetPosition() + (_thisIController.WorldMatrix.Up * 1);
 			_thisDestination.Set();
 			_draw.DrawLine(_thisDestination);
 			_draw.Update(tick);
@@ -199,7 +203,7 @@ namespace Bots.GridControl.Models
 				_gridSystems.ControllableGyros.SetTargetHeading(_usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition);
 				_thisDestination.To = _usePlayerPosition ? MyAPIGateway.Session.Player.GetPosition() : _targetPosition;
 
-				distance = Vector3D.Distance(_targetPosition, _thisController.GetPosition() + GetCurrentThrustVector() * _engagementRange);
+				distance = Vector3D.Distance(_targetPosition, _thisIController.GetPosition() + GetCurrentThrustVector() * _engagementRange);
 				switch (_botState)
 				{
 					case BotState.None:
@@ -283,29 +287,59 @@ namespace Bots.GridControl.Models
 				//}
 			}
 
-			
 
+			double mass = _thisCubeGrid.Mass;// _thisController.CalculateShipMass().PhysicalMass;
+			Vector3D gravity = _thisController.GetNaturalGravity();
+			Vector3D gravityNormalized = Vector3D.Normalize(gravity);
+			double requiredThrust = mass * gravity.Length();
+			double forwardThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Forward);
+			double upThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Up);
+			double rightThrust = Vector3D.Dot(_thisIController.GetShipVelocities().LinearVelocity, _thisController.WorldMatrix.Right);
+			double arrestForwardMovement = mass * forwardThrust;
+			double arrestUpMovement = mass * upThrust;
+			double arrestRightMovement = mass * rightThrust;
+			double forwardRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Forward), gravityNormalized);
+			double upRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Up), gravityNormalized);
+			double rightRatio = -Vector3D.Dot(Vector3D.Normalize(_thisController.WorldMatrix.Right), gravityNormalized);
 
-			
-
-			double time = _thisController.GetShipVelocities().LinearVelocity.Length() / Math.Abs(GetBrakingSpeed());
-			
 			_rightScreen.AppendLine($"Distance: {distance}");
 			_rightScreen.AppendLine($"Displacement: {displacement}");
 			_rightScreen.AppendLine($"Bot State: {_botState}");
-			_rightScreen.AppendLine($"Current Thrust Direction: {_currentThrustDirection}");
-			_rightScreen.AppendLine($"Target Position: {_targetPosition}");
-			_rightScreen.AppendLine($"Linear Velocity: {_thisController.GetShipVelocities().LinearVelocity.Length()}");
-			_rightScreen.AppendLine($"Braking Speed: {GetBrakingSpeed()}");
-			_rightScreen.AppendLine($"Time: {time}");
-			_rightScreen.AppendLine($"Time^2: {time * time}");
-			_rightScreen.AppendLine($"\n");
-			_rightScreen.AppendLine($"Braking Calculations:");
-			_rightScreen.AppendLine($"Physical Mass: {_thisController.CalculateShipMass().PhysicalMass}");
-			_rightScreen.AppendLine($"Total Mass: {_thisController.CalculateShipMass().TotalMass}");
-			_rightScreen.AppendLine($"Base Mass: {_thisController.CalculateShipMass().BaseMass}");
-			_rightScreen.AppendLine($"Max Available Thrust: {_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(GetBrakingDirection())}");
-			
+			//_rightScreen.AppendLine($"Current Thrust Direction: {_currentThrustDirection}");
+			//_rightScreen.AppendLine($"\n");
+			_rightScreen.AppendLine($"::: Dampners :::");
+			_rightScreen.AppendLine($"Total Mass: {_thisIController.CalculateShipMass().TotalMass}");
+			_rightScreen.AppendLine($"Grid Mass: {mass}");
+			_rightScreen.AppendLine($"Gravity Length: {gravity.Length()}");
+			_rightScreen.AppendLine($"Required Thrust: {requiredThrust}");
+			_rightScreen.AppendLine();
+			_rightScreen.AppendLine($"Forward Thrust: {forwardThrust}");
+			_rightScreen.AppendLine($"Up Thrust: {upThrust}");
+			_rightScreen.AppendLine($"Right Thrust: {rightThrust}");
+			_rightScreen.AppendLine();
+			_rightScreen.AppendLine($"Forward Thrust Arrest: {arrestForwardMovement}");
+			_rightScreen.AppendLine($"Up Thrust Arrest: {arrestUpMovement}");
+			_rightScreen.AppendLine($"Right Thrust Arrest: {arrestRightMovement}");
+			//_rightScreen.AppendLine($"Forward Ratio: {forwardRatio}");
+			//_rightScreen.AppendLine($"Forward Thrust: {forwardRatio * requiredThrust}");
+			//_rightScreen.AppendLine($"Up Ratio: {upRatio}");
+			//_rightScreen.AppendLine($"Up Thrust: {upRatio * requiredThrust}");
+			//_rightScreen.AppendLine($"Right Ratio: {rightRatio}");
+			//_rightScreen.AppendLine($"Right Thrust: {rightRatio * requiredThrust}");
+
+
+			//_rightScreen.AppendLine($"Target Position: {_targetPosition}");
+			//_rightScreen.AppendLine($"Linear Velocity: {_thisController.GetShipVelocities().LinearVelocity.Length()}");
+			//_rightScreen.AppendLine($"Braking Speed: {GetBrakingSpeed()}");
+			//_rightScreen.AppendLine($"Time: {time}");
+			//_rightScreen.AppendLine($"Time^2: {time * time}");
+			//_rightScreen.AppendLine($"\n");
+			//_rightScreen.AppendLine($"Braking Calculations:");
+			//_rightScreen.AppendLine($"Physical Mass: {_thisController.CalculateShipMass().PhysicalMass}");
+			//_rightScreen.AppendLine($"Total Mass: {_thisController.CalculateShipMass().TotalMass}");
+			//_rightScreen.AppendLine($"Base Mass: {_thisController.CalculateShipMass().BaseMass}");
+			//_rightScreen.AppendLine($"Max Available Thrust: {_gridSystems.ControllableThrusters.GetMaxEffectiveThrustInDirection(GetBrakingDirection())}");
+
 			_gridSystems.DebugScreens.WriteToRight(_rightScreen.ToString());
 		}
 
@@ -313,14 +347,14 @@ namespace Bots.GridControl.Models
 
 		private double GravityEffect()
 		{
-			Vector3D naturalGravity = _thisController.GetNaturalGravity();
+			Vector3D naturalGravity = _thisIController.GetNaturalGravity();
 			return Vector3D.Dot(Vector3D.Normalize(naturalGravity), GetCurrentThrustVector()) * naturalGravity.Length();
 		}
 
 		private double Displacement(double safeStop = 0)
 		{
 			double
-				linearVelocity = _thisController.GetShipVelocities().LinearVelocity.Length(),
+				linearVelocity = _thisIController.GetShipVelocities().LinearVelocity.Length(),
 				braking = GetBrakingSpeed() + GravityEffect(),
 				time = linearVelocity/Math.Abs(braking),
 				timeSquared = time * time;
@@ -364,6 +398,7 @@ namespace Bots.GridControl.Models
 			base.Close();
 			_draw.ClearLines();
 			MyAPIGateway.Utilities.MessageEntered -= MessageEntered;
+			_gridSystems.ControllableThrusters.OnWriteToLog -= WriteToLog;
 		}
 	}
 }
