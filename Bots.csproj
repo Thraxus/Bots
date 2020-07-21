@@ -186,12 +186,15 @@
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Controllers\WhipsCode\VectorMath.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\BotState.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\EngagementPattern.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\ShipMatrixTranslation.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\ThrustPower.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\GyroOverrides.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Line.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\PidType.cs" />
-    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\ThrustDirection.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\Enums\MovementDirection.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\PointBillboard.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\DataTypes\ThrusterSettings.cs" />
+    <Compile Include="Bots\Data\Scripts\Bots\GridControl\Models\ThrustControl.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\GridControlCore.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Interfaces\ILog.cs" />
     <Compile Include="Bots\Data\Scripts\Bots\GridControl\Interfaces\IUpdate.cs" />

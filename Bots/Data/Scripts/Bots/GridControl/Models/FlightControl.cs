@@ -11,6 +11,7 @@ using Bots.GridControl.Interfaces;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
+using VRage.Game;
 using VRageMath;
 using IMyShipController = Sandbox.ModAPI.IMyShipController;
 using Line = Bots.GridControl.DataTypes.Line;
@@ -86,7 +87,7 @@ namespace Bots.GridControl.Models
 			}
 			if (message.ToLower().StartsWith("t"))
 			{
-				_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Forward, ThrustPower.Full);
+				_gridSystems.ControllableThrusters.SetThrust(MovementDirection.Forward, ThrustPower.Full);
 			}
 			if (message.ToLower().StartsWith("r"))
 			{
@@ -110,7 +111,7 @@ namespace Bots.GridControl.Models
 			_engagementRange = 400;
 		}
 
-		private ThrustDirection _currentThrustDirection = ThrustDirection.Forward;
+		private MovementDirection _currentThrustDirection = MovementDirection.Forward;
 		private Vector3D _targetPosition = Vector3D.Zero;
 		private bool _usePlayerPosition;
 
@@ -124,41 +125,41 @@ namespace Bots.GridControl.Models
 		{
 			switch (_currentThrustDirection)
 			{
-				case ThrustDirection.Forward:
+				case MovementDirection.Forward:
 					return _thisIController.WorldMatrix.Forward;
-				case ThrustDirection.Back:
+				case MovementDirection.Back:
 					return _thisIController.WorldMatrix.Backward;
-				case ThrustDirection.Right:
+				case MovementDirection.Right:
 					return _thisIController.WorldMatrix.Right;
-				case ThrustDirection.Left:
+				case MovementDirection.Left:
 					return _thisIController.WorldMatrix.Left;
-				case ThrustDirection.Up:
+				case MovementDirection.Up:
 					return _thisIController.WorldMatrix.Up;
-				case ThrustDirection.Down:
+				case MovementDirection.Down:
 					return _thisIController.WorldMatrix.Down;
 				default:
 					return Vector3D.Zero;
 			}
 		}
 
-		private ThrustDirection GetBrakingDirection()
+		private MovementDirection GetBrakingDirection()
 		{
 			switch (_currentThrustDirection)
 			{
-				case ThrustDirection.Forward:
-					return ThrustDirection.Back;
-				case ThrustDirection.Back:
-					return ThrustDirection.Forward;
-				case ThrustDirection.Right:
-					return ThrustDirection.Left;
-				case ThrustDirection.Left:
-					return ThrustDirection.Right;
-				case ThrustDirection.Up:
-					return ThrustDirection.Down;
-				case ThrustDirection.Down:
-					return ThrustDirection.Up;
+				case MovementDirection.Forward:
+					return MovementDirection.Back;
+				case MovementDirection.Back:
+					return MovementDirection.Forward;
+				case MovementDirection.Right:
+					return MovementDirection.Left;
+				case MovementDirection.Left:
+					return MovementDirection.Right;
+				case MovementDirection.Up:
+					return MovementDirection.Down;
+				case MovementDirection.Down:
+					return MovementDirection.Up;
 				default:
-					return ThrustDirection.Forward;
+					return MovementDirection.Forward;
 			}
 		}
 
@@ -186,6 +187,9 @@ namespace Bots.GridControl.Models
 
 		public void Update(long tick)
 		{
+			//MySimpleObjectDraw.draw 
+			//MyTransparentGeometry.
+			//MyTransparentGeometry.AddBillboardOriented()
 			_gridSystems.ControllableThrusters.Update(tick);
 			_rightScreen.Clear();
 			double distance = 0;
@@ -214,23 +218,20 @@ namespace Bots.GridControl.Models
 						if (distance > _engagementBuffer)
 						{
 							_gridSystems.ControllableThrusters.SetThrust(_currentThrustDirection, ThrustPower.Full);
-							_gridSystems.ControllableThrusters.SetThrust(GetBrakingDirection(), ThrustPower.None);
 						}
 						else if (distance < _engagementBuffer)
 						{
-							_gridSystems.ControllableThrusters.SetThrust(_currentThrustDirection, ThrustPower.None);
 							_gridSystems.ControllableThrusters.SetThrust(GetBrakingDirection(), ThrustPower.Full);
 						}
 						else 
 						{
 							_gridSystems.ControllableThrusters.SetThrust(_currentThrustDirection, ThrustPower.None);
-							_gridSystems.ControllableThrusters.SetThrust(GetBrakingDirection(), ThrustPower.None);
 						}
 
 						if (_engagementPattern == EngagementPattern.None)
 						{
 							_engagementPattern = EngagementPattern.Circling;
-							_gridSystems.ControllableThrusters.SetThrust(ThrustDirection.Left, ThrustPower.TenPercent);
+							_gridSystems.ControllableThrusters.SetThrust(MovementDirection.Left, ThrustPower.TenPercent);
 						}
 						break;
 					case BotState.Evading:

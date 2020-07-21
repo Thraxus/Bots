@@ -1,6 +1,6 @@
 ﻿namespace Bots.GridControl.DataTypes.Enums
 {
-	public enum ThrustDirection
+	public enum MovementDirection
 	{
 		Up, 
 		Down,

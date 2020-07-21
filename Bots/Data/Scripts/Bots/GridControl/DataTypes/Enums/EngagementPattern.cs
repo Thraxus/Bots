@@ -5,6 +5,7 @@
 		None,
 		Circling,
 		HeadOn,
-		Strafing
+		Strafing,
+		DriveBy
 	}
 }

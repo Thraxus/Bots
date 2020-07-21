@@ -13,11 +13,11 @@ namespace Bots.GridControl.Models
 		private readonly IMyThrust _thisIThruster;
 		private readonly MyThrust _thisThruster;
 		private readonly MyThrustDefinition _thisDefinition;
-		public readonly ThrustDirection ThrustDirection;
+		public readonly MovementDirection ThrustDirection;
 		public float AdjustedMaxThrust;
 
 
-		public ControllableThruster(IMyThrust thisThruster, ThrustDirection thisDirection)
+		public ControllableThruster(IMyThrust thisThruster, MovementDirection thisDirection)
 		{
 			_thisIThruster = thisThruster;
 			ThrustDirection = thisDirection;

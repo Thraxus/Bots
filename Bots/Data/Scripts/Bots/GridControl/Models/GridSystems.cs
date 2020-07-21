@@ -7,7 +7,7 @@ using ILog = Bots.GridControl.Interfaces.ILog;
 
 namespace Bots.GridControl.Models
 {
-	internal class GridSystems : BaseLoggingClass, IUpdate, ILog
+	public class GridSystems : BaseLoggingClass, IUpdate, ILog
 	{
 		protected override string Id { get; } = "GridSystems";
 
